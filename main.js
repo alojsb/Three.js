@@ -1,73 +1,77 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { getFresnelMat } from "./static/src/getFresnelMat.js";
 
-// initialize
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
+THREE.BufferGeometry.prototype.tripleFace = tripleFace;
+
+let scene = new THREE.Scene();
+let camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 1, 1000);
+camera.position.set(0, 0, 12);
+let renderer = new THREE.WebGLRenderer({antialias: true});
+renderer.setSize(innerWidth, innerHeight);
 document.body.appendChild(renderer.domElement);
-camera.position.z = 5;
-const rotationSpeed = 0.0005;
 
-// orbit controls
-new OrbitControls(camera, renderer.domElement);
+let controls = new OrbitControls(camera, renderer.domElement);
 
-// axial tilt
-const earthGroup = new THREE.Group();
-earthGroup.rotation.z = 23.5 * Math.PI / 180;
-scene.add(earthGroup);
+let light = new THREE.DirectionalLight(0xffffff, 1);
+light.position.setScalar(1);
+scene.add(light, new THREE.AmbientLight(0xffffff, 0.5));
 
-// planet
-const planetSurface = new THREE.TextureLoader().load("static/textures/earthmap1k.jpg");
-const geometry = new THREE.IcosahedronGeometry(1, 8);
-const material = new THREE.MeshStandardMaterial({
-    map: planetSurface,
-    // color: 0xdcafbb,
-    // flatShading: true,
-    // wireframe: true
+let g = new THREE.IcosahedronGeometry(5, 5).tripleFace();
+console.log(g);
+let m = new THREE.MeshLambertMaterial({color: "aqua", wireframe: false});
+let o = new THREE.Mesh(g, m);
+scene.add(o);
+
+let l = new THREE.Mesh(g, new THREE.MeshBasicMaterial({wireframe: true}));
+l.scale.setScalar(1.002);
+scene.add(l);
+
+window.addEventListener("resize", () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
 });
-const geoide = new THREE.Mesh(geometry, material);
-earthGroup.add(geoide);
 
-// nightside lights
-const nightLightSurface = new THREE.TextureLoader().load("static/textures/earthlights1k.jpg");
-const nightlightMaterial = new THREE.MeshStandardMaterial({
-    map: nightLightSurface,
-    blending: THREE.AdditiveBlending
+renderer.setAnimationLoop(()=>{
+  renderer.render(scene, camera);
 });
-const nightEarth = new THREE.Mesh(geometry, nightlightMaterial);
-earthGroup.add(nightEarth);
 
-// clouds
-const cloudLayer = new THREE.TextureLoader().load("static/textures/earthcloudmap.jpg");
-const cloudMaterial = new THREE.MeshStandardMaterial({
-    map: cloudLayer,
-    blending: THREE.AdditiveBlending,
-    transparent: true,
-    opacity: 0.45
-});
-const cloudMesh = new THREE.Mesh(geometry, cloudMaterial);
-cloudMesh.scale.setScalar(1.01);
-earthGroup.add(cloudMesh);
-
-// atmospheric glow
-const fresnelMat = getFresnelMat();
-const glowMesh = new THREE.Mesh(geometry, fresnelMat);
-glowMesh.scale.setScalar(1.02);
-earthGroup.add(glowMesh);
-
-// White directional light at half intensity shining from the top.
-const directionalLight = new THREE.DirectionalLight( 0xffffff);
-directionalLight.position.set(-2, 0, 0);
-scene.add( directionalLight );
-
-// render loop
-function animate() {
-    geoide.rotation.y += rotationSpeed;
-    nightEarth.rotation.y += rotationSpeed;
-    cloudMesh.rotation.y += rotationSpeed * 1.5;
-    renderer.render(scene, camera);
+function tripleFace(){
+  let geometry = this;
+  let pos = geometry.attributes.position;
+  if (geometry.index != null) {
+    console.log("Works for non-indexed geometries!");
+    return;
+  }
+  
+  let facesCount = pos.count / 3;
+  
+  let pts = [];
+  let triangle = new THREE.Triangle();
+  let a = new THREE.Vector3(), b = new THREE.Vector3, c = new THREE.Vector3();
+  for(let i = 0; i < facesCount; i++){
+    a.fromBufferAttribute(pos, i * 3 + 0);
+    b.fromBufferAttribute(pos, i * 3 + 1);
+    c.fromBufferAttribute(pos, i * 3 + 2);
+    triangle.set(a, b, c);
+    let o = new THREE.Vector3();
+    triangle.getMidpoint(o);
+    
+    // make it tetrahedron-like
+    let l = a.distanceTo(b);
+    let h = Math.sqrt(3) / 2 * l * 0.125;// scale it at your will
+                                        // remove 0.125 to get tetrahedrons
+    let d = o.clone().normalize().setLength(h); 
+    o.add(d);
+    
+    pts.push(
+      o.clone(), a.clone(), b.clone(),
+      o.clone(), b.clone(), c.clone(),
+      o.clone(), c.clone(), a.clone()
+    );
+  }
+  
+  let g = new THREE.BufferGeometry().setFromPoints(pts);
+  g.computeVertexNormals()
+  return g;
 }
-renderer.setAnimationLoop(animate);
