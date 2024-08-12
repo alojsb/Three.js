@@ -1,73 +1,138 @@
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import * as THREE from 'three'
+//import './styles.css'
 
-// initialize
-var scene = new THREE.Scene();
-var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.z = 5;
-camera.lookAt(scene.position);
-var renderer = new THREE.WebGLRenderer({
-  antialias: true
-});
-document.body.appendChild(renderer.domElement);
-renderer.setSize(window.innerWidth, window.innerHeight);
+const defaultColor = 'slateblue';
+const hoverColor = 'aquamarine'
 
-new OrbitControls(camera, renderer.domElement);
-
-var geometry = new THREE.CylinderGeometry(1, 1, 3, 24, 1, false);
-var material = new THREE.ShaderMaterial({
-  uniforms: {
-    color1: {
-      value: new THREE.Color("red")
-    },
-    color2: {
-      value: new THREE.Color("purple")
-    }
-  },
-  vertexShader: `
-    varying vec2 vUv;
-
-    void main() {
-      vUv = uv;
-      gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
-    }
-  `,
-  fragmentShader: `
-    uniform vec3 color1;
-    uniform vec3 color2;
-  
-    varying vec2 vUv;
-    
-    void main() {
-      
-      gl_FragColor = vec4(mix(color1, color2, vUv.y), 1.0);
-    }
-  `,
-  wireframe: false
-});
-var mesh = new THREE.Mesh(geometry, material);
-scene.add(mesh);
-
-
-
-render();
-
-function resize(renderer) {
-  const canvas = renderer.domElement;
-  const width = canvas.clientWidth;
-  const height = canvas.clientHeight;
-  const needResize = canvas.width !== width || canvas.height !== height;
-  if (needResize) {
-    renderer.setSize(width, height, false);
+class Cube extends THREE.Mesh {
+  constructor() {
+    super()
+    this.geometry = new THREE.BoxGeometry()
+    this.material = new THREE.MeshStandardMaterial({ color: new THREE.Color(defaultColor).convertSRGBToLinear() })
+    this.cubeSize = 0
+    this.cubeActive = false
   }
-  return needResize;
+
+  render() {
+    this.rotation.x = this.rotation.y += 0.00025
+  }
+
+  onResize(width, height, aspect) {
+    this.cubeSize = width / 5 // 1/5 of the full width
+    this.scale.setScalar(this.cubeSize * (this.cubeActive ? 1.5 : 1))
+  }
+
+  onPointerOver(e) {
+    this.material.color.set(hoverColor)
+    this.material.color.convertSRGBToLinear()
+  }
+
+  onPointerOut(e) {
+    this.material.color.set(defaultColor)
+    this.material.color.convertSRGBToLinear()
+  }
+
+  onClick(e) {
+    this.cubeActive = !this.cubeActive
+    //this.scale.setScalar(this.cubeSize * (this.cubeActive ? 1.5 : 1))
+	this.material.color.set('yellow')
+    this.material.color.convertSRGBToLinear()
+  }
 }
 
-function render() {
-  if (resize(renderer)) {
-    camera.aspect = canvas.clientWidth / canvas.clientHeight;
-    camera.updateProjectionMatrix();
-  }
-  renderer.render(scene, camera);
-  requestAnimationFrame(render);
+// state
+let width = 0
+let height = 0
+let intersects = []
+let hovered = {}
+
+// setup
+const scene = new THREE.Scene()
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
+camera.position.z = 5
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+renderer.setPixelRatio(Math.min(Math.max(1, window.devicePixelRatio), 2))
+renderer.toneMapping = THREE.ACESFilmicToneMapping
+renderer.outputEncoding = THREE.sRGBEncoding
+document.getElementById('root').appendChild(renderer.domElement)
+const raycaster = new THREE.Raycaster()
+const mouse = new THREE.Vector2()
+
+// view
+const cube1 = new Cube()
+cube1.position.set(-1.5, 0, 0)
+const cube2 = new Cube()
+cube2.position.set(1.5, 0, 0)
+scene.add(cube1)
+scene.add(cube2)
+
+const ambientLight = new THREE.AmbientLight()
+const pointLight = new THREE.PointLight()
+pointLight.position.set(10, 10, 10)
+scene.add(ambientLight)
+scene.add(pointLight)
+
+// responsive
+function resize() {
+  width = window.innerWidth
+  height = window.innerHeight
+  camera.aspect = width / height
+  const target = new THREE.Vector3(0, 0, 0)
+  const distance = camera.position.distanceTo(target)
+  const fov = (camera.fov * Math.PI) / 180
+  const viewportHeight = 2 * Math.tan(fov / 2) * distance
+  const viewportWidth = viewportHeight * (width / height)
+  camera.updateProjectionMatrix()
+  renderer.setSize(width, height)
+  scene.traverse((obj) => {
+    if (obj.onResize) obj.onResize(viewportWidth, viewportHeight, camera.aspect)
+  })
 }
+
+window.addEventListener('resize', resize)
+resize()
+
+// events
+window.addEventListener('pointermove', (e) => {
+  mouse.set((e.clientX / width) * 2 - 1, -(e.clientY / height) * 2 + 1)
+  raycaster.setFromCamera(mouse, camera)
+  intersects = raycaster.intersectObjects(scene.children, true)
+
+  // If a previously hovered item is not among the hits we must call onPointerOut
+  Object.keys(hovered).forEach((key) => {
+    const hit = intersects.find((hit) => hit.object.uuid === key)
+    if (hit === undefined) {
+      const hoveredItem = hovered[key]
+      if (hoveredItem.object.onPointerOver) hoveredItem.object.onPointerOut(hoveredItem)
+      delete hovered[key]
+    }
+  })
+
+  intersects.forEach((hit) => {
+    // If a hit has not been flagged as hovered we must call onPointerOver
+    if (!hovered[hit.object.uuid]) {
+      hovered[hit.object.uuid] = hit
+      if (hit.object.onPointerOver) hit.object.onPointerOver(hit)
+    }
+    // Call onPointerMove
+    if (hit.object.onPointerMove) hit.object.onPointerMove(hit)
+  })
+})
+
+window.addEventListener('click', (e) => {
+  intersects.forEach((hit) => {
+    // Call onClick
+    if (hit.object.onClick) hit.object.onClick(hit)
+  })
+})
+
+// render-loop, called 60-times/second
+function animate(t) {
+  requestAnimationFrame(animate)
+  scene.traverse((obj) => {
+    if (obj.render) obj.render(t)
+  })
+  renderer.render(scene, camera)
+}
+
+animate()
