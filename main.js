@@ -8,7 +8,7 @@ const renderer = new THREE.WebGLRenderer({antialias: true});
 renderer.setSize( window.innerWidth, window.innerHeight );
 renderer.setAnimationLoop( animate );
 document.body.appendChild( renderer.domElement );
-camera.position.z = 5;
+camera.position.z = 15;
 //let intersects = [];
 let intersectObj;
 
@@ -26,61 +26,15 @@ function onPointerMove( event ) {
 	//console.log(pointer.x + ", " + pointer.y);
 }
 
-// vectors
-const v_001 = new THREE.Vector3(0, 0, 0);
-const v_002 = new THREE.Vector3(1, 1, 0);
-const v_003 = new THREE.Vector3(0, 1, 1);
-const v_004 = new THREE.Vector3(2, 2, 0);
-const v_005 = new THREE.Vector3(3, 4, 0);
-const v_006 = new THREE.Vector3(5, 6, 0);
-const v_007 = new THREE.Vector3(-1, -4, 0);
-const v_008 = new THREE.Vector3(-5, -3, 0);
-const v_009 = new THREE.Vector3(-2, -2, 0);
-
-// mesh
-const tri_001 = new THREE.Triangle(v_001, v_002, v_003);
-const tri_002 = new THREE.Triangle(v_004, v_005, v_006);
-const tri_003 = new THREE.Triangle(v_007, v_008, v_009);
-
-// create a simple square shape. We duplicate the top left and bottom right
-// vertices because each vertex needs to appear once per triangle.
-const vertices = new Float32Array([
-	-1.0, -1.0,  1.0, // v0
-	 1.0, -1.0,  1.0, // v1
-	 1.0,  1.0,  1.0, // v2
-
-	 1.0,  1.0,  1.0, // v3
-	-1.0,  1.0,  1.0, // v4
-	-1.0, -1.0,  1.0,  // v5
-
-	 1.0,  1.0,  1.0, // v6
-	-1.0,  1.0,  1.0, // v7
-	 0.0,  2.0,  1.0, // v8
-]);
-
-const colors = new Float32Array([
-	 0.54, 0.08, 0.22, // v0
-	 0.54, 0.08, 0.22, // v1
-	 0.54, 0.08, 0.22, // v2
-
-	 0.77, 0.38, 0.15, // v3
-	 0.77, 0.38, 0.15, // v4
-	 0.77, 0.38, 0.15, // v5
-
-	 0.13, 0.58, 0.05, // v6
-	 0.13, 0.58, 0.05, // v7
-	 0.13, 0.58, 0.05, // v8
-]);
-
-// itemSize = 3 because there are 3 values (components) per vertex
-geometry.setAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
-geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
+// set up mesh
+const geometry = new THREE.IcosahedronGeometry(12, 48);
 const material = new THREE.MeshBasicMaterial ( {
 	color: 0xffffff,
-	vertexColors: true,
-	side: THREE.DoubleSide,
+	wireframe: true
+	//vertexColors: true,
+	//side: THREE.DoubleSide,
 } );
+//const material = new THREE.MeshBasicMaterial();
 const mesh = new THREE.Mesh( geometry, material );
 scene.add( mesh );
 
@@ -112,7 +66,7 @@ function animate() {
             intersectObj = null;
         }
 	}
-	//console.log(intersects);
+	console.log(intersects);
 	renderer.render( scene, camera );
 }
 
