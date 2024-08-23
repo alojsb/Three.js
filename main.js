@@ -26,8 +26,21 @@ function onPointerMove( event ) {
 	//console.log(pointer.x + ", " + pointer.y);
 }
 
+// vectors
+const v_001 = new THREE.Vector3(0, 0, 0);
+const v_002 = new THREE.Vector3(1, 1, 0);
+const v_003 = new THREE.Vector3(0, 1, 1);
+const v_004 = new THREE.Vector3(2, 2, 0);
+const v_005 = new THREE.Vector3(3, 4, 0);
+const v_006 = new THREE.Vector3(5, 6, 0);
+const v_007 = new THREE.Vector3(-1, -4, 0);
+const v_008 = new THREE.Vector3(-5, -3, 0);
+const v_009 = new THREE.Vector3(-2, -2, 0);
+
 // mesh
-const geometry = new THREE.BufferGeometry();
+const tri_001 = new THREE.Triangle(v_001, v_002, v_003);
+const tri_002 = new THREE.Triangle(v_004, v_005, v_006);
+const tri_003 = new THREE.Triangle(v_007, v_008, v_009);
 
 // create a simple square shape. We duplicate the top left and bottom right
 // vertices because each vertex needs to appear once per triangle.
