@@ -14,12 +14,6 @@ function colorTriangle(col) {
 	return HexToVertexColor(col).concat(HexToVertexColor(col)).concat(HexToVertexColor(col))
 }
 
-// colors
-const _0x173ae7 = new THREE.Color("#173ae7").convertSRGBToLinear();
-const _0xe74617 = new THREE.Color("#e74617").convertSRGBToLinear();
-
-console.log(_0x173ae7);
-
 // initial setup
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
@@ -47,22 +41,15 @@ const vertices = new Float32Array( [
 	-1.0, -1.0,  1.0  // v5
 ] );
 
-// const colors = new Float32Array([
-// 	-1.0, -1.0,  1.0, // v0
-// 	 1.0, -1.0,  1.0, // v1
-// 	 1.0,  1.0,  1.0, // v2
+const colors = new Float32Array([
+	-1.0, -1.0,  1.0, // v0
+	 1.0, -1.0,  1.0, // v1
+	 1.0,  1.0,  1.0, // v2
 
-// 	 1.0,  1.0,  1.0, // v3
-// 	-1.0,  1.0,  1.0, // v4
-// 	-1.0, -1.0,  1.0  // v5
-// ]);
-
-const colors = new Float32Array(colorTriangle("#173ae7").concat(colorTriangle("#e74617")));
-
-console.log(colors);
-
-//const vertices = new Float32Array([ -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0 ]);
-//const colors = new Float32Array([ 0.04, 0.78, 0.45, 0.04, 0.78, 0.45, 0.04, 0.78, 0.45 ]);
+	 1.0,  1.0,  1.0, // v3
+	-1.0,  1.0,  1.0, // v4
+	-1.0, -1.0,  1.0  // v5
+]);
 
 // itemSize = 3 because there are 3 values (components) per vertex
 geometry.setAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
