@@ -23,6 +23,7 @@ function onPointerMove( event ) {
 	// (-1 to +1) for both components
 	pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
 	pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+	//console.log(pointer.x + ", " + pointer.y);
 }
 
 // mesh
@@ -84,29 +85,21 @@ function animate() {
 	// }
 
 	// affects nearest intersecting object
-	if (intersects.length > 0) {
+	if (intersects.length > 0 && pointer.x && pointer.y) {
         if (intersectObj != intersects[ 0 ].object) {
-
-            // reset opacity
-            if (intersectObj)
-			intersectObj.material.color.setHex( 0xffff00 );
-
             // notice new object
             intersectObj = intersects[ 0 ].object;
-            // set object to 75% opacity
-            //intersectObj.material.opacity = 0.25;
             intersectObj.material.color.setHex( 0xff0000 );
         }
 	}
 	else {
-        // reset opacity
+        // reset color
         if (intersectObj) {
             intersectObj.material.color.setHex( 0xffffff );
             intersectObj = null;
         }
 	}
-	console.log(intersects);
-
+	//console.log(intersects);
 	renderer.render( scene, camera );
 }
 
