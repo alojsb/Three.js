@@ -1,73 +1,103 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-// initial setup
+const renderer = new THREE.WebGLRenderer({
+  antialias: true
+});
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const fov = 75;
+const aspect = window.innerWidth / window.innerHeight;
+const near = 0.01;
+const far = 50;
+const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+camera.position.z = 5;
+
+const controls = new OrbitControls(camera, renderer.domElement);
+
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
-const renderer = new THREE.WebGLRenderer({antialias: true});
-renderer.setSize( window.innerWidth, window.innerHeight );
-renderer.setAnimationLoop( animate );
-document.body.appendChild( renderer.domElement );
-camera.position.z = 15;
-//let intersects = [];
-let intersectObj;
 
-// orbit controls
-new OrbitControls(camera, renderer.domElement);
+const caster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
 
-const raycaster = new THREE.Raycaster();
-const pointer = new THREE.Vector2();
 
-function onPointerMove( event ) {
-	// calculate pointer position in normalized device coordinates
-	// (-1 to +1) for both components
-	pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-	pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
-	//console.log(pointer.x + ", " + pointer.y);
+const shapes = {
+
+  icosahedrons: [
+    makeIcosahedron(new THREE.IcosahedronGeometry(2882 / 2000, 5), new THREE.MeshStandardMaterial({
+      vertexColors: true
+    }))
+  ],
+
+};
+
+scene.add(new THREE.AmbientLight(0xffffff, 1));
+
+function onClick(event) {
+
+  event.preventDefault();
+
+  mouse.x = (event.clientX / renderer.domElement.offsetWidth) * 2 - 1;
+  mouse.y = -(event.clientY / renderer.domElement.offsetHeight) * 2 + 1;
+
+  caster.setFromCamera(mouse, camera);
+
+  const intersects = caster.intersectObjects(scene.children);
+
+  if (intersects.length > 0) {
+
+    const intersection = intersects[0];
+
+    const colorAttribute = intersection.object.geometry.getAttribute('color');
+    const face = intersection.face;
+
+    const color = new THREE.Color(Math.random() * 0xff0000);
+
+    colorAttribute.setXYZ(face.a, color.r, color.g, color.b);
+    colorAttribute.setXYZ(face.b, color.r, color.g, color.b);
+    colorAttribute.setXYZ(face.c, color.r, color.g, color.b);
+
+    colorAttribute.needsUpdate = true;
+
+  }
+
 }
 
-// set up mesh
-const geometry = new THREE.IcosahedronGeometry(12, 48);
-const material = new THREE.MeshBasicMaterial ( {
-	color: 0xffffff,
-	wireframe: true
-	//vertexColors: true,
-	//side: THREE.DoubleSide,
-} );
-//const material = new THREE.MeshBasicMaterial();
-const mesh = new THREE.Mesh( geometry, material );
-scene.add( mesh );
+function makeIcosahedron(geometry, materials, x = 0, y = 0) {
 
-// renderer
-function animate() {
-	// update the picking ray with the camera and pointer position
-	raycaster.setFromCamera( pointer, camera );
+  const icosahedron = new THREE.Mesh(geometry, materials);
 
-	// calculate objects intersecting the picking ray
-	const intersects = raycaster.intersectObjects( scene.children );
+  const positionAttribute = geometry.getAttribute('position');
+  const colors = [];
 
-	// affects all intersecting objects
-	// for ( let i = 0; i < intersects.length; i ++ ) {
-	// 	intersects[ i ].object.material.color.set( 0x0000ff );
-	// }
+  for (let i = 0; i < positionAttribute.count; i++) {
 
-	// affects nearest intersecting object
-	if (intersects.length > 0 && pointer.x && pointer.y) {
-        if (intersectObj != intersects[ 0 ].object) {
-            // notice new object
-            intersectObj = intersects[ 0 ].object;
-            intersectObj.material.color.setHex( 0xff0000 );
-        }
-	}
-	else {
-        // reset color
-        if (intersectObj) {
-            intersectObj.material.color.setHex( 0xffffff );
-            intersectObj = null;
-        }
-	}
-	console.log(intersects);
-	renderer.render( scene, camera );
+    colors.push(1, 1, 1); // add for each vertex color data
+
+  }
+
+  const colorAttribute = new THREE.Float32BufferAttribute(colors, 3);
+  geometry.setAttribute('color', colorAttribute);
+
+  icosahedron.position.x = x;
+  icosahedron.position.y = y;
+
+  scene.add(icosahedron);
+
+  return icosahedron;
+
 }
 
-window.addEventListener( 'pointermove', onPointerMove );
+function render() {
+
+  requestAnimationFrame(render);
+
+  renderer.render(scene, camera);
+
+}
+
+window.addEventListener("click", onClick, false);
+
+render();
