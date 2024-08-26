@@ -26,22 +26,6 @@ function onPointerMove( event ) {
 	//console.log(pointer.x + ", " + pointer.y);
 }
 
-// vectors
-const v_001 = new THREE.Vector3(0, 0, 0);
-const v_002 = new THREE.Vector3(1, 1, 0);
-const v_003 = new THREE.Vector3(0, 1, 1);
-const v_004 = new THREE.Vector3(2, 2, 0);
-const v_005 = new THREE.Vector3(3, 4, 0);
-const v_006 = new THREE.Vector3(5, 6, 0);
-const v_007 = new THREE.Vector3(-1, -4, 0);
-const v_008 = new THREE.Vector3(-5, -3, 0);
-const v_009 = new THREE.Vector3(-2, -2, 0);
-
-// mesh
-const tri_001 = new THREE.Triangle(v_001, v_002, v_003);
-const tri_002 = new THREE.Triangle(v_004, v_005, v_006);
-const tri_003 = new THREE.Triangle(v_007, v_008, v_009);
-
 // create a simple square shape. We duplicate the top left and bottom right
 // vertices because each vertex needs to appear once per triangle.
 const vertices = new Float32Array([
@@ -51,11 +35,23 @@ const vertices = new Float32Array([
 
 	 1.0,  1.0,  1.0, // v3
 	-1.0,  1.0,  1.0, // v4
-	-1.0, -1.0,  1.0,  // v5
+	-1.0, -1.0,  1.0, // v5
 
 	 1.0,  1.0,  1.0, // v6
 	-1.0,  1.0,  1.0, // v7
 	 0.0,  2.0,  1.0, // v8
+
+	-1.0, -1.0,  1.0, // v9
+	-3.0,  1.0,  1.0, // v10
+	-2.5, -2.0,  1.0, // v11
+
+	-1.0, -1.0,  1.0, // v12
+	-1.0,  1.0,  1.0, // v13
+	-3.0,  1.0,  1.0, // v14
+
+	-1.0,  1.0,  1.0, // v15
+	-3.0,  3.0,  1.0, // v16
+	-3.0,  1.0,  1.0, // v17
 ]);
 
 const colors = new Float32Array([
@@ -70,7 +66,21 @@ const colors = new Float32Array([
 	 0.13, 0.58, 0.05, // v6
 	 0.13, 0.58, 0.05, // v7
 	 0.13, 0.58, 0.05, // v8
+
+	 0.43, 0.18, 0.85, // v9
+	 0.43, 0.18, 0.85, // v10
+	 0.43, 0.18, 0.85, // v11
+
+	 0.11, 0.72, 0.48, // v12
+	 0.11, 0.72, 0.48, // v13
+	 0.11, 0.72, 0.48, // v14
+
+	 0.15, 0.11, 0.63, // v15
+	 0.15, 0.11, 0.63, // v16
+	 0.15, 0.11, 0.63, // v17
 ]);
+
+const geometry = new THREE.BufferGeometry();
 
 // itemSize = 3 because there are 3 values (components) per vertex
 geometry.setAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
